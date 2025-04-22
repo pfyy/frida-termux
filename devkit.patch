@@ -1,0 +1,45 @@
+diff --git a/setup.py b/setup.py
+index 488e047..71a4776 100644
+--- a/setup.py
++++ b/setup.py
+@@ -13,6 +13,24 @@ from setuptools.extension import Extension
+ SOURCE_ROOT = Path(__file__).resolve().parent
+ FRIDA_EXTENSION = os.environ.get("FRIDA_EXTENSION", None)
+ 
++package_dir = os.path.dirname(os.path.realpath(__file__))
++version_script = os.path.join(package_dir, "frida", "_frida", "extension.version")
++
++include_dirs = []
++library_dirs = []
++libraries = []
++extra_link_args = []
++
++devkit_dir = os.environ.get("FRIDA_CORE_DEVKIT", None)
++if devkit_dir is not None:
++    include_dirs += [devkit_dir]
++    library_dirs += [devkit_dir]
++    libraries += ["frida-core"]
++    extra_link_args += [
++        f"-Wl,--version-script,{version_script}",
++        "-Wl,--gc-sections",
++    ]
++
+ 
+ def main():
+     setup(
+@@ -56,10 +74,14 @@ def main():
+             Extension(
+                 name="frida._frida",
+                 sources=["frida/_frida/extension.c"],
++                include_dirs=include_dirs,
++                library_dirs=library_dirs,
++                libraries=libraries,
++                extra_link_args=extra_link_args,
+                 py_limited_api=True,
+             )
+         ],
+-        cmdclass={"build_ext": FridaPrebuiltExt if FRIDA_EXTENSION is not None else FridaDemandBuiltExt},
++        cmdclass={},
+         zip_safe=False,
+     )
+ 
